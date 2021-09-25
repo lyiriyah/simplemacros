@@ -12,6 +12,8 @@ shift_keys = ["KEY_LEFTSHIFT", "KEY_RIGHTSHIFT"]
 keymap = {}
 shift_keymap = {}
 
+led = 2
+
 configfolder = os.environ['HOME'] + "/.config/"
 
 configfile = configfolder + "simplemacros.conf"
@@ -21,6 +23,12 @@ with open(configfile, "r") as f:
         print(f"{num} | {line}")
         if line.startswith("var"):
             exec(' '.join(line.split()[1::]))
+        elif line.startswith("set"):
+            split_line = line.split()
+            if split_line[1] == "led":
+                led = int(split_line[2])
+            else:
+                print(f"error: {split_line[1]} not a recognised set option")
         elif len(line) == 0 or line.isspace() or line.startswith('#'):
             pass
         elif line.startswith("shift"):
@@ -42,10 +50,10 @@ for event in dev.read_loop():
         key = categorize(event)
         if key.keystate == key.key_up and key.keycode in shift_keys:
             if is_shifted:
-                dev.set_led(2, 0)
+                dev.set_led(led, 0)
                 is_shifted = False
             else:
-                dev.set_led(2, 1)
+                dev.set_led(led, 1)
                 is_shifted = True
         elif key.keystate == key.key_up and key.keycode not in shift_keys:
             try:
