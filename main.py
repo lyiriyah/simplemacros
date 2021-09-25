@@ -1,4 +1,4 @@
-#!/bin/env python
+#!/usr/bin/env python
 
 from evdev import InputDevice, categorize, ecodes, events
 
