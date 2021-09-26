@@ -11,6 +11,7 @@ debug = False
 
 parser = argparse.ArgumentParser(description="Simple Linux-only macro program.")
 parser.add_argument("--debug", action='store_true', help='Debugging mode for debugging purposes')
+parser.add_argument("--config", help='Change the config file')
 args = parser.parse_args()
 
 def run(x):
@@ -27,7 +28,7 @@ led = 2
 event_handler = None
 
 configfolder = os.environ['HOME'] + "/.config/"
-configfile = configfolder + "simplemacros.conf"
+configfile = args.config if args.config is not None else configfolder + "simplemacros.conf"
 
 if not os.path.exists(configfile):
     open(configfile, "w+").close()
