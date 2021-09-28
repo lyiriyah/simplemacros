@@ -1,0 +1,10 @@
+[Service]
+Environment="DISPLAY=:0"
+Type=simple
+ExecStart=/usr/bin/env /usr/local/bin/simplemacros
+ExecStop=/usr/local/bin/pkill simplemacros
+Environment=SSH_AUTH_SOCK=%t/keyring/ssh
+Restart=on-failure
+
+[Install]
+WantedBy=default.target
