@@ -3,6 +3,7 @@
 from evdev import InputDevice, categorize, ecodes, events
 
 import argparse
+import asyncio
 import os
 import subprocess, shlex
 
@@ -10,9 +11,11 @@ debug = False
 
 parser = argparse.ArgumentParser(description="Simple Linux-only macro program.")
 parser.add_argument("--debug", action='store_true', help='Debugging mode for debugging purposes')
+parser.add_argument("--config", help='Change the config file')
 args = parser.parse_args()
 
-run = lambda x: subprocess.run(shlex.split(x), preexec_fn=os.setpgrp)
+def run(x):
+    _ = subprocess.Popen(shlex.split(x))
 
 is_shifted = False
 
@@ -22,10 +25,13 @@ keymap = {}
 shift_keymap = {}
 
 led = 2
+event_handler = None
 
 configfolder = os.environ['HOME'] + "/.config/"
+configfile = args.config if args.config is not None else configfolder + "simplemacros.conf"
 
-configfile = configfolder + "simplemacros.conf"
+if not os.path.exists(configfile):
+    open(configfile, "w+").close()
 
 with open(configfile, "r") as f:
     for num, line in enumerate(f):
@@ -41,8 +47,7 @@ with open(configfile, "r") as f:
                 event_handler = split_line[2]
             else:
                 print(f"error: {split_line[1]} not a recognised set option")
-        elif len(line) == 0 or line.isspace() or line.startswith('#'):
-            pass
+        elif len(line) == 0 or line.isspace() or line.startswith('#'): pass
         elif line.startswith("shift"):
             split_line = line.lstrip("shift ").split("=")
             shift_keymap[str(split_line[0]).replace(" ", "")] = split_line[1]
@@ -54,26 +59,29 @@ if args.debug:
     print(keymap)
     print(shift_keymap)
 
-dev = InputDevice("/dev/input/" + event_handler)
+if event_handler is None:
+    raise Exception("Event handler not provided")
 
+dev = InputDevice("/dev/input/" + event_handler)
 dev.grab()
 
 try:
     for event in dev.read_loop():
         if event.type == ecodes.EV_KEY:
             key = categorize(event)
-        if key.keystate == key.key_up and key.keycode in shift_keys:
-            if is_shifted:
-                dev.set_led(led, 0)
-                is_shifted = False
-            else:
-                dev.set_led(led, 1)
-                is_shifted = True
-        elif key.keystate == key.key_up and key.keycode not in shift_keys:
-            try:
-                eval(shift_keymap[key.keycode]) if is_shifted else eval(keymap[key.keycode])
-            except KeyError:
-                print(f"shift+{key.keycode} isn't bound!") if is_shifted else print(f"{key.keycode} isn't bound!")
+            if key.keystate == key.key_up and key.keycode in shift_keys:
+                if is_shifted:
+                    dev.set_led(led, 0)
+                    is_shifted = False
+                else:
+                    dev.set_led(led, 1)
+                    is_shifted = True
+            elif key.keystate == key.key_up and key.keycode not in shift_keys:
+                try:
+                    eval(shift_keymap[key.keycode]) if is_shifted else eval(
+                            keymap[key.keycode])
+                except KeyError:
+                   print(f"shift+{key.keycode} isn't bound!") if is_shifted else print( f"{key.keycode} isn't bound!")
 except (KeyboardInterrupt, ImportError):
     print("\nSimplemacros is exiting...")
     dev.ungrab
