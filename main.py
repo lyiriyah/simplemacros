@@ -30,7 +30,7 @@ configfile = configfolder + "simplemacros.conf"
 with open(configfile, "r") as f:
     for num, line in enumerate(f):
         if args.debug:
-            print(f"{num} | {line}") 
+            print(f"{num} | {line}")
         if line.startswith("var"):
             exec(' '.join(line.split()[1::]))
         elif line.startswith("set"):
@@ -44,7 +44,7 @@ with open(configfile, "r") as f:
         elif len(line) == 0 or line.isspace() or line.startswith('#'):
             pass
         elif line.startswith("shift"):
-            split_line = line.lstrip("shift ").split("=") 
+            split_line = line.lstrip("shift ").split("=")
             shift_keymap[str(split_line[0]).replace(" ", "")] = split_line[1]
         else:
             split_line = line.split('=')
